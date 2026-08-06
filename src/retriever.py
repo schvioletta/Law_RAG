@@ -233,9 +233,7 @@ class LawRetriever:
                 )
         return sim_q, sim_e
 
-    def first_stage(
-        self, question: str, topn: int = CAND_N, exclude_qid: str | None = None
-    ) -> tuple[list[str], np.ndarray, dict]:
+    def _bm25_lists(self, question: str) -> tuple[np.ndarray, dict[str, float], list[str]]:
         q_tokens = tokenize_lemmas(question)
         sd = self.bm25_doc.get_scores(q_tokens)
         sc = self.bm25_chunk.get_scores(q_tokens)
@@ -244,7 +242,6 @@ class LawRetriever:
             d = self.chunk_doc[i]
             if d not in best_chunk or s > best_chunk[d]:
                 best_chunk[d] = float(s)
-
         scores: dict[str, float] = defaultdict(float)
         for rank, idx in enumerate(np.argsort(sd)[::-1][:100]):
             scores[self.doc_ids[idx]] += 1.0 / (60 + rank + 1)
@@ -252,10 +249,33 @@ class LawRetriever:
             sorted(best_chunk.items(), key=lambda x: -x[1])[:100]
         ):
             scores[d] += 1.0 / (60 + rank + 1)
+        lexical = [d for d, _ in sorted(scores.items(), key=lambda x: -x[1])]
+        return sd, best_chunk, lexical
 
+    def first_stage(
+        self, question: str, topn: int = CAND_N, exclude_qid: str | None = None
+    ) -> tuple[list[str], np.ndarray, dict]:
+        sd, best_chunk, lexical = self._bm25_lists(question)
+        scores: dict[str, float] = {
+            d: 1.0 / (60 + rank + 1) for rank, d in enumerate(lexical[:100])
+        }
         sim_q, sim_e = self._bag_sims(question, exclude_qid=exclude_qid)
         for i, d in enumerate(self.doc_ids):
-            scores[d] += 0.40 * float(sim_q[i]) + 0.30 * float(sim_e[i])
+            scores[d] = scores.get(d, 0.0) + 0.40 * float(sim_q[i]) + 0.30 * float(
+                sim_e[i]
+            )
+        if self.use_dense:
+            dens_chunk, dens_full, dens_ev = self._dense_scores(
+                question, exclude_qid=exclude_qid
+            )
+            dense_scores = {
+                d: max(dens_chunk.get(d, 0.0), float(dens_full[i]), dens_ev.get(d, 0.0))
+                for i, d in enumerate(self.doc_ids)
+            }
+            for rank, (d, _) in enumerate(
+                sorted(dense_scores.items(), key=lambda x: -x[1])[:100]
+            ):
+                scores[d] = scores.get(d, 0.0) + 0.85 / (60 + rank + 1)
 
         ranked = [d for d, _ in sorted(scores.items(), key=lambda x: -x[1])[:topn]]
         return ranked, sd, best_chunk
@@ -419,7 +439,7 @@ class LawRetriever:
         print(f"CV mean Recall@{TOP_K}={mean_r:.4f}")
         return mean_r
 
-    def fit(self, num_boost_round: int = 150) -> lgb.Booster:
+    def fit(self, num_boost_round: int = 200) -> lgb.Booster:
         X, y, groups = self.build_train_matrix()
         self.model = self._train_booster(X, y, groups, num_boost_round=num_boost_round)
         with open(OUT / "lgbm_ranker.pkl", "wb") as f:
@@ -437,18 +457,33 @@ class LawRetriever:
         cands, sd, best_chunk = self.first_stage(question, CAND_N)
         feats = self.features_for(question, cands, sd, best_chunk)
         scores = self.model.predict(feats)
-        order = np.argsort(-scores)
-        out = []
-        seen = set()
-        for i in order:
-            d = cands[i]
-            if d in seen:
-                continue
-            seen.add(d)
-            out.append(d)
-            if len(out) >= topk:
-                break
-        return out
+        ltr_ranked = [cands[i] for i in np.argsort(-scores)]
+
+        sim_q, sim_e = self._bag_sims(question)
+        bag_conf = float(max(sim_q.max(), sim_e.max()))
+
+        # High bag confidence → trust LambdaRank (train-doc neighborhood).
+        # Low confidence → fuse with lexical/dense so unseen docs can surface.
+        if bag_conf >= 0.28:
+            return ltr_ranked[:topk]
+
+        _, _, lexical = self._bm25_lists(question)
+        fused: dict[str, float] = defaultdict(float)
+        for rank, d in enumerate(ltr_ranked[:40]):
+            fused[d] += 1.5 / (60 + rank + 1)
+        for rank, d in enumerate(lexical[:40]):
+            fused[d] += 1.2 / (60 + rank + 1)
+        if self.use_dense:
+            dens_chunk, dens_full, dens_ev = self._dense_scores(question)
+            dense_scores = {
+                d: max(dens_chunk.get(d, 0.0), float(dens_full[i]), dens_ev.get(d, 0.0))
+                for i, d in enumerate(self.doc_ids)
+            }
+            for rank, (d, _) in enumerate(
+                sorted(dense_scores.items(), key=lambda x: -x[1])[:40]
+            ):
+                fused[d] += 1.0 / (60 + rank + 1)
+        return [d for d, _ in sorted(fused.items(), key=lambda x: -x[1])[:topk]]
 
     def predict_submission(self, path: Path | None = None) -> pd.DataFrame:
         rows = []
