@@ -1,0 +1,4 @@
+cv_honest_recall@5=0.582857
+cv_trainlike_recall@5=0.588571
+train_gold_frac=0.585714
+unique_docs=253
