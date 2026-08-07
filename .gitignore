@@ -16,3 +16,4 @@ outputs/rut5_*/
 .DS_Store
 artifacts/
 logs/
+outputs/*.partial.csv
