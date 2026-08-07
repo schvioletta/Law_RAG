@@ -17,3 +17,4 @@ outputs/rut5_*/
 artifacts/
 logs/
 outputs/*.partial.csv
+outputs/*.shard*.csv
