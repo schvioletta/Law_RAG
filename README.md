@@ -12,11 +12,12 @@
 |--------|------|----------------|
 | train-bag LTR | признаки «документ встречался в train» | LB ≈ **0.006** |
 | pure LTR (`make_submission.py`) | BM25+TFIDF+e5 без утечки | LB **0.440** |
-| v5/v6 | +BGE, FT e5, RM3/dense-all; CV по `gold_doc` | honest CV ≈ **0.58** |
+| v5/v6 | +BGE, FT e5; CV по `gold_doc` | honest CV ≈ **0.58**, LB **0.52** |
+| CE FT (v8/v9) | mmarco MiniLM на evidence | holdout **0.19** (хуже FS) — отброшен |
+| HyDE ruT5 | q→ideal_answer | q+gen хуже BM25(q) |
+| **v10** | FT e5 на `gold_evidence`, all-chunk dense+BM25+LTR | honest CV ≈ **0.65**, FS@5 **0.61** |
 
-Локальный CV без группировки по `gold_doc` был завышен (~0.68): у одного документа несколько train-вопросов.
-
-Oracle: эмбеддинг `gold_evidence` даёт Recall@5 ≈ **0.79** — цель достижима, если query-эмбеддинг приблизить к evidence.
+Oracle: `BM25(q+ideal_answer)` ≈ **0.77**; evidence keywords ≈ **0.90**. Лидер LB **0.76**.
 
 ## Данные
 
@@ -27,23 +28,20 @@ Oracle: эмбеддинг `gold_evidence` даёт Recall@5 ≈ **0.79** — ц
 | `data/test.csv` | 350 вопросов для лидерборда |
 | `data/sample_submission.csv` | шаблон сабмита |
 
-## Подход
+## Подход (v10)
 
-1. **First-stage**: BM25 (леммы) по документам/чанкам + TF-IDF + dense (BGE-m3, fine-tuned e5).
-2. **Rerank**: LightGBM LambdaRank на retrieval-признаках (без bag-of-train-docs).
-3. Мягкий boost только при высокой похожести вопроса на train (порог ~0.52).
-4. Выход: top-5 `doc_id`.
+1. Fine-tune `multilingual-e5-small` на парах (question, `gold_evidence_text`) — MNRL.
+2. First-stage: BM25 doc+chunk + TF-IDF + **dense по всем чанкам** (без subsample).
+3. Rerank: LightGBM LambdaRank (без train-gold bag).
+4. Honest CV: **GroupKFold по `gold_doc_id`**.
 
-Нельзя опираться на «этот doc был gold в train» как основной сигнал — на LB это обваливает скор.
+Нельзя опираться на «этот doc был gold в train» — на LB это обваливает скор.
 
 ## Запуск
 
 ```bash
 pip install -r requirements.txt
-python3 src/make_submission.py      # базовый pure pipeline
-# или более новые:
-python3 src/make_submission_v6.py
-python3 src/make_submission_v7.py   # после fine-tune e5_ft2
+python3 src/make_submission_v10.py   # лучший текущий стек
 ```
 
 Результат: `submission.csv`.

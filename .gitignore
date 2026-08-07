@@ -7,6 +7,7 @@ outputs/*.log
 outputs/*.pkl
 outputs/e5_ft/
 outputs/e5_ft2/
+outputs/e5_evid*/
 outputs/ce_*/
 outputs/rut5_*/
 *.npz
