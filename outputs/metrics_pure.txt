@@ -1,0 +1,3 @@
+cv_recall@5=0.675714
+train_recall@5=0.902857
+train_gold_frac=0.638286

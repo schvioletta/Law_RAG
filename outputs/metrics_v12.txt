@@ -1,0 +1,7 @@
+{
+  "mode": "dense",
+  "train_optimistic_r5": 0.6642857142857143,
+  "unique_docs": 256,
+  "train_gold_frac": 0.532,
+  "dense_fs5": 0.6643
+}

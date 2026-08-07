@@ -1,0 +1,19 @@
+{
+  "cv": 0.62,
+  "folds": [
+    0.5357142857142857,
+    0.55,
+    0.6642857142857143,
+    0.7142857142857143,
+    0.6357142857142857
+  ],
+  "unique_raw": 252,
+  "train_gold_frac_raw": 0.5811428571428572,
+  "unique_equal": 246,
+  "train_gold_frac_equal": 0.5914285714285714,
+  "equal_set_diff": 231,
+  "mild_set_diff_note": "mild [1.15,1.0] often set_diff=0 on top5-only RRF",
+  "model": "outputs/e5_nested_v15",
+  "submit": "equal RRF(v6,v15_ltr) weights=[1.0,1.0]",
+  "note": "NOT a restore of LB 0.52; md5 != v6"
+}

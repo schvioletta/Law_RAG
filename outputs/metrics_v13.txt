@@ -1,0 +1,23 @@
+{
+  "cv": 0.7142857142857142,
+  "folds": [
+    0.5928571428571429,
+    0.7,
+    0.7642857142857142,
+    0.7857142857142857,
+    0.7285714285714285
+  ],
+  "fs": {
+    "1": 0.29714285714285715,
+    "5": 0.6114285714285714,
+    "10": 0.7257142857142858,
+    "20": 0.8342857142857143,
+    "50": 0.9385714285714286
+  },
+  "unique_docs_v13": 263,
+  "train_gold_frac_v13": 0.456,
+  "unique_docs_fuse": 247,
+  "train_gold_frac_fuse": 0.5885714285714285,
+  "fuse_diff_queries": 273,
+  "note": "dense FT is full-data e5_evid_v10; CV still partly leaky; root submission.csv left as v6 unless --replace-submit"
+}
