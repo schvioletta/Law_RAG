@@ -6,7 +6,8 @@
 
 Файл для лидерборда: **`submission.csv`** (`qid,doc_id`, по 5 документов на вопрос).
 
-**Актуальный пайплайн — top-5 LB ≈ 0.726** (`src/make_submission_top5.py`).
+**Актуальный пайплайн — top-5 LB ≈ 0.726** (`src/make_submission_top5.py`).  
+Сдавать корневой **`submission.csv`** (md5 `1153caca4930485ec534f0f84fb35012`).
 
 ### История метрик
 
