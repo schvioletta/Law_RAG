@@ -8,7 +8,7 @@
 
 **Актуальный LB: 0.68571 (3 место).** Цель — догнать лидеров (~0.76).
 
-Сдавать корневой **`submission.csv`**. Сейчас идёт улучшение `top5c` (CE@512 + BM25-doc в RRF).
+Сдавать корневой **`submission.csv`** (top5c, md5 `58a8623e98a6046d11744ebfafa78ba4`). Предыдущий LB **0.68571** сохранён в `outputs/submission_top5.csv`.
 
 ### История метрик
 
@@ -19,7 +19,7 @@
 | v6 | BM25+BGE+FT e5+LTR | **LB 0.52** |
 | v12 | e5-base ICT + pure dense | **LB 0.497** |
 | **top5** | dedup + drop train + BM25/USER2 + RRF + bge-reranker (усечённый CE) | **LB 0.68571** (3 место) |
-| top5c (WIP) | +BM25(doc) в RRF, CE@512 по лучшему чанку/doc | в прогоне |
+| **top5c** | +BM25(doc) в RRF, CE@512 по лучшему чанку/doc | **к сдаче** (ожидаем >0.68571) |
 
 ## Данные
 
