@@ -1,0 +1,17 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+outputs/cache/
+outputs/*.log
+outputs/*.pkl
+outputs/e5_ft/
+outputs/e5_ft2/
+outputs/e5_evid*/
+outputs/e5_base*/
+outputs/ce_*/
+outputs/rut5_*/
+*.npz
+.ipynb_checkpoints/
+.DS_Store
+artifacts/
