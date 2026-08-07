@@ -22,6 +22,7 @@
 | HyDE ruT5 | q→ideal_answer | q+gen хуже BM25(q) |
 | v10 | FT e5 на evidence + LTR | CV ≈0.65 (**leak**), LB **0.52** |
 | **v12** | e5-base ICT + pure dense | **LB 0.497** — хуже, откат |
+| v13 (эксперимент) | e5_evid + LTR без NN; fuse с v6 | CV ≈0.71 (**leak**); raw train_gold_frac↓ — **не сдаём** |
 
 Oracle-потолки (локально): BM25(q+ideal_answer) ≈ **0.77**, BM25(q+evidence) ≈ **0.90**.
 
