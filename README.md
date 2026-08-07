@@ -6,10 +6,17 @@
 
 Файл для лидерборда: **`submission.csv`** (`qid,doc_id`, по 5 документов на вопрос).
 
-**Сейчас в репозитории лежит v6 (LB ≈ 0.52).**  
-Если на лидерборде **0.49714** — это был **v12** (регрессия). Пересдайте текущий `submission.csv` из ветки/PR — это откат на v6.
+**Сейчас в репозитории — v15 equal fuse** (не откат к 0.52):
 
-Не сдавайте заново `make_submission_v10.py` / `v12` без проверки: локальный CV у них завышен из‑за утечки (FT dense на всём train до GroupKFold).
+`RRF([v6, v15_ltr], weights=[1.0, 1.0])`
+
+- отличается от v6 на **231/350** вопросов по составу top-5
+- `train_gold_frac ≈ 0.591` (как у v6 ≈0.589)
+- локально: nested RRF ≈ **0.55** (честный GroupKFold), LTR CV ≈ **0.62**
+
+Якорь v6 лежит в `outputs/submission_v6.csv` (LB **0.52**). Если equal уйдёт вниз — откатитесь на него.
+
+Не сдавайте сырой v12 / train-bag: они уже давали регрессию на LB.
 
 ### История метрик
 
@@ -17,12 +24,14 @@
 |--------|------|----------------|
 | train-bag LTR | признаки «документ встречался в train» | LB ≈ **0.006** |
 | pure LTR | BM25+TFIDF+e5 без утечки | LB **0.440** |
-| **v6** | BM25+BGE+FT e5+LTR (+ soft NN) | honest CV ≈ **0.58**, **LB 0.52** ← текущий submit |
+| **v6** | BM25+BGE+FT e5+LTR (+ soft NN) | honest CV ≈ **0.58**, **LB 0.52** |
 | CE FT (v8/v9) | mmarco MiniLM на evidence | holdout **0.19** — отброшен |
-| HyDE ruT5 | q→ideal_answer | q+gen хуже BM25(q) |
+| HyDE ruT5 | q→ideal_answer / keywords | хуже BM25(q) на honest CV |
 | v10 | FT e5 на evidence + LTR | CV ≈0.65 (**leak**), LB **0.52** |
-| **v12** | e5-base ICT + pure dense | **LB 0.497** — хуже, откат |
-| v13 (эксперимент) | e5_evid + LTR без NN; fuse с v6 | CV ≈0.71 (**leak**); raw train_gold_frac↓ — **не сдаём** |
+| **v12** | e5-base ICT + pure dense | **LB 0.497** — хуже |
+| v13 | e5_evid + LTR; fuse с v6 | CV ≈0.71 (**leak**); raw train_gold_frac↓ |
+| v14 | USER-base + e5_evid + LTR | USER@5 ≈0.33 (слабо), не сдаём |
+| **v15** | nested e5-small FT + BM25 + LTR ⊕ v6 equal | nested RRF ≈**0.55**; LTR CV ≈**0.62**; set_diff≈**231** ← текущий submit |
 
 Oracle-потолки (локально): BM25(q+ideal_answer) ≈ **0.77**, BM25(q+evidence) ≈ **0.90**.
 
@@ -35,21 +44,29 @@ Oracle-потолки (локально): BM25(q+ideal_answer) ≈ **0.77**, BM2
 | `data/test.csv` | 350 вопросов для лидерборда |
 | `data/sample_submission.csv` | шаблон сабмита |
 
-## Подход (v6 — актуальный submit)
+## Подход (v15 — актуальный submit)
 
-1. First-stage: BM25 (doc+chunk) + TF-IDF + dense (BGE / FT e5, в т.ч. all-chunk index).
-2. Rerank: LightGBM LambdaRank (без train-gold bag).
-3. Honest CV: **GroupKFold по `gold_doc_id`**.
+1. **Nested** fine-tune `multilingual-e5-small` на question↔evidence/ideal_answer (GroupKFold по `gold_doc_id`) — честный прирост BM25→RRF ≈ 0.50→0.55.
+2. Full-data FT той же схемы → dense index.
+3. First-stage: BM25 (doc+chunk) + TF-IDF + dense; rerank LightGBM LambdaRank.
+4. **Equal fuse с pinned v6**: `RRF([v6, v15_ltr], weights=[1.0, 1.0])` — реальные set-изменения top-5 при `train_gold_frac≈0.59`.
 
-Нельзя опираться на «этот doc был gold в train» — на LB это обваливает скор.  
-Test-вопросы почти не дублируют train (char-sim ≪ paraphrase-порога), поэтому копирование gold соседей / агрессивный NN boost раздувает CV и бьёт по LB.
+Альтернативы в `outputs/`:
+- `submission_v6.csv` — known-good LB 0.52
+- `submission_v15_raw.csv` — сырой v15 LTR
+- `submission_v15_aggressive.csv` — сильнее вес v15
+- `submission_v15.csv` — mild fuse (часто только reorder)
+
+Нельзя опираться на «этот doc был gold в train» — на LB это обваливает скор.
 
 ## Запуск
 
 ```bash
 pip install -r requirements.txt
-# актуальный known-good submit уже в submission.csv (v6)
-# python3 src/make_submission_v6.py   # нужен cache BGE/e5_ft
+# 1) nested FT + embeddings (долго на CPU)
+PYTHONPATH=src python3 src/make_submission_v15_nested.py
+# 2) LTR + fuse (нужны outputs/e5_nested_v15 и cache)
+PYTHONPATH=src python3 src/make_submission_v15.py
 ```
 
-Эксперименты v10/v12 оставлены в `src/` для истории; **не затирайте `submission.csv` ими**, пока nested-CV не покажет реальный прирост.
+Эксперименты v10–v14 оставлены в `src/` для истории.
