@@ -15,9 +15,12 @@
 | v5/v6 | +BGE, FT e5; CV по `gold_doc` | honest CV ≈ **0.58**, LB **0.52** |
 | CE FT (v8/v9) | mmarco MiniLM на evidence | holdout **0.19** (хуже FS) — отброшен |
 | HyDE ruT5 | q→ideal_answer | q+gen хуже BM25(q) |
-| **v10** | FT e5 на `gold_evidence`, all-chunk dense+BM25+LTR | honest CV ≈ **0.65**, FS@5 **0.61** |
+| **v10** | FT e5 на `gold_evidence`, all-chunk dense+BM25+LTR | CV ≈0.65 (завышен), **LB 0.52** |
+| **v12** | e5-base + ICT на всех 468 docs + masked evidence; pure dense | train dense@5 ≈ **0.66**, train_gold_frac≈0.53 |
 
 Oracle: `BM25(q+ideal_answer)` ≈ **0.77**; evidence keywords ≈ **0.90**. Лидер LB **0.76**.
+
+v10 CV был завышен: e5 видел все gold evidence до GroupKFold.
 
 ## Данные
 
