@@ -6,8 +6,9 @@
 
 Файл для лидерборда: **`submission.csv`** (`qid,doc_id`, по 5 документов на вопрос).
 
-**Актуальный пайплайн — top-5 LB ≈ 0.726** (`src/make_submission_top5.py`).  
-Сдавать корневой **`submission.csv`** (md5 `1153caca4930485ec534f0f84fb35012`).
+**Актуальный LB: 0.68571 (3 место).** Цель — догнать лидеров (~0.76).
+
+Сдавать корневой **`submission.csv`**. Сейчас идёт улучшение `top5c` (CE@512 + BM25-doc в RRF).
 
 ### История метрик
 
@@ -17,7 +18,8 @@
 | pure LTR | BM25+TFIDF+e5 без утечки | LB **0.440** |
 | v6 | BM25+BGE+FT e5+LTR | **LB 0.52** |
 | v12 | e5-base ICT + pure dense | **LB 0.497** |
-| **top5** | dedup + drop train docs + BM25/USER2 + RRF + bge-reranker-v2-m3 | **LB ≈ 0.726** |
+| **top5** | dedup + drop train + BM25/USER2 + RRF + bge-reranker (усечённый CE) | **LB 0.68571** (3 место) |
+| top5c (WIP) | +BM25(doc) в RRF, CE@512 по лучшему чанку/doc | в прогоне |
 
 ## Данные
 
