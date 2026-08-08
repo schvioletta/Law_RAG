@@ -1,0 +1,27 @@
+{
+  "pipeline": "top5d: identical first-stage to 0.68571 + fuller chunk CE@512",
+  "parent_lb": 0.68571,
+  "failed_top5c_lb": 0.59429,
+  "cfg": {
+    "threads_per_worker": 4,
+    "ce_max_cands": 70,
+    "ce_max_chars": 1200,
+    "ce_max_length": 512,
+    "batch_size": 16
+  },
+  "raw": {
+    "name": "top5d",
+    "rows": 1750,
+    "unique_docs": 184,
+    "train_leak": 0,
+    "overlap_top5": 0.6874285714285714
+  },
+  "fuse": {
+    "name": "top5d_fuse",
+    "rows": 1750,
+    "unique_docs": 185,
+    "train_leak": 0,
+    "overlap_top5": 0.8359999999999999
+  },
+  "submission_chosen": "keep"
+}

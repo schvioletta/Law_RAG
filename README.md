@@ -1,61 +1,41 @@
 # Law RAG — поиск судебных актов (Recall@5)
 
-Решение задачи retrieval по корпусу обезличенных судебных актов о спорах вокруг НПФ.
+## Что сдавать
 
-## Важно — что сдавать
+Корневой **`submission.csv`** = **top5d** (fuller CE@512 по чанкам).  
+md5: `352ece678faee8705ca3b9fdfe751d10`
 
-Файл для лидерборда: **`submission.csv`** (`qid,doc_id`, по 5 документов на вопрос).
+Если регресс — откат на `outputs/submission_top5.csv` (LB **0.68571**, md5 `1153caca4930485ec534f0f84fb35012`).
 
-**Актуальный submit = top5, LB 0.68571 (3 место).**  
-top5c на LB дал **0.59429** — откатили. Цель: **~0.74**.
-
-Сдавать корневой **`submission.csv`** (md5 `1153caca4930485ec534f0f84fb35012`).
-
-### История метрик
+## История LB
 
 | Версия | Идея | LB |
 |--------|------|-----|
-| v6 | BM25+BGE+FT e5+LTR | 0.52 |
-| **top5** | dedup + drop train + BM25/USER2 + RRF + bge-reranker | **0.68571** ← текущий |
-| top5c | +BM25(doc), CE best-chunk/doc @512 | **0.59429** (регрессия, откат) |
-| top5d (WIP) | тот же first-stage, fuller CE по чанкам @512 | в работе → цель 0.74 |
+| v6 | BM25+BGE+e5+LTR | 0.52 |
+| **top5** | dedup + drop train + BM25/USER2 + RRF + bge@384/top60 | **0.68571** (3 место) |
+| top5c | +BM25(doc), CE best-chunk/doc @512 | **0.59429** ← плохо, откатили |
+| **top5d** | тот же first-stage что top5, CE по чанкам @512 / top70 | **к сдаче** (цель ~0.74) |
 
-## Данные
+## Пайплайн top5d
 
-| Файл | Описание |
-|------|----------|
-| `data/documents.csv` | 468 документов (`doc_id`, `text`) |
-| `data/train.csv` | 700 размеченных вопросов |
-| `data/test.csv` | 350 вопросов для лидерборда |
-| `data/sample_submission.csv` | шаблон сабмита |
+1. Dedup текстов (keep first)
+2. Exclude train gold docs
+3. Chunks 2000 / overlap 1000
+4. BM25 (леммы) + `deepvk/USER2-base` → RRF top-100+100
+5. Cross-encoder `BAAI/bge-reranker-v2-m3` на fused **чанках** (`max_length=512`, top-70)
+6. Уникальные `doc_id` по CE-скору → top-5
 
-## Пайплайн (top-5 / 0.726)
-
-1. Удаляются документы с дублирующимся текстом (остаются первые вхождения).
-2. Исключаются документы из тренировочной выборки (`gold_doc_id` из `train.csv`).
-3. Каждый документ режется на чанки **2000** символов с перекрытием **1000**.
-4. Лексический поиск: лемматизация + стоп-слова → индекс **BM25** по чанкам.
-5. Семантический поиск: эмбеддинги чанков моделью **`deepvk/USER2-base`**.
-6. По запросу параллельно: BM25 top-100 и dense top-100.
-7. Объединение списков через **RRF**.
-8. Рерanking кросс-энкодером **`BAAI/bge-reranker-v2-m3`**.
-9. Сортировка по CE-скору → уникальные `doc_id` без повторений → top-5.
-
-Наибольшее влияние на скор: **реранкер** и **удаление документов из train**.
-
-Локальный CV на train с `drop_train=True` бессмысленен (gold вне корпуса). Для smoke-проверки используйте `--keep-train-docs --eval-train`.
+Отличие от провального top5c: **нет** BM25-doc и **нет** collapse в один чанк/doc до CE.
 
 ## Запуск
 
 ```bash
 pip install -r requirements.txt
+# known-good 0.68571
 python3 src/make_submission_top5.py
-# → submission.csv и outputs/submission_top5.csv
+# fuller CE (top5d)
+python3 src/run_top5d_parallel.py --workers 1 --threads-per-worker 4 \
+  --ce-max-cands 70 --ce-max-length 512 --submit raw
 ```
 
-Опции:
-
-```bash
-python3 src/make_submission_top5.py --device cpu --rerank-batch-size 32
-python3 src/make_submission_top5.py --keep-train-docs --eval-train --max-train-eval 50
-```
+Бэкапы: `outputs/submission_top5.csv`, `outputs/submission_top5d_fuse.csv` (RRF с 0.68571).
