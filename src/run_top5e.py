@@ -189,14 +189,18 @@ def main():
         "batch_size": args.batch_size,
     }
 
-    ctx = mp.get_context("spawn")
-    procs = [ctx.Process(target=worker, args=(i, args.workers, cfg)) for i in range(args.workers)]
-    for p in procs:
-        p.start()
-    for p in procs:
-        p.join()
-        if p.exitcode != 0:
-            raise SystemExit(f"shard failed: {p.exitcode}")
+    if args.workers == 1:
+        # Avoid multiprocessing spawn overhead / CPU contention for single worker.
+        worker(0, 1, cfg)
+    else:
+        ctx = mp.get_context("spawn")
+        procs = [ctx.Process(target=worker, args=(i, args.workers, cfg)) for i in range(args.workers)]
+        for p in procs:
+            p.start()
+        for p in procs:
+            p.join()
+            if p.exitcode != 0:
+                raise SystemExit(f"shard failed: {p.exitcode}")
 
     test = pd.read_csv(DATA / "test.csv")
     parts = [pd.read_csv(OUT / f"submission_{TAG}.shard{i}.csv") for i in range(args.workers)]
