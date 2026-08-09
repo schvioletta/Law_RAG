@@ -1,0 +1,34 @@
+{
+  "pipeline": "top5e: retrieve150 + chunk CE@512 top110 + fuse with 0.70857",
+  "parent_lb": 0.70857,
+  "cfg": {
+    "threads_per_worker": 4,
+    "top_retrieve": 150,
+    "ce_max_cands": 85,
+    "ce_max_chars": 1200,
+    "ce_max_length": 512,
+    "batch_size": 16
+  },
+  "raw": {
+    "name": "top5e",
+    "rows": 1750,
+    "unique_docs": 188,
+    "train_leak": 0,
+    "overlap_base": 0.9371428571428572
+  },
+  "fuse": {
+    "name": "top5e_fuse",
+    "rows": 1750,
+    "unique_docs": 189,
+    "train_leak": 0,
+    "overlap_base": 0.9737142857142855
+  },
+  "fuse_heavy": {
+    "name": "top5e_fuse_heavy",
+    "rows": 1750,
+    "unique_docs": 188,
+    "train_leak": 0,
+    "overlap_base": 0.9371428571428572
+  },
+  "submission_chosen": "keep"
+}

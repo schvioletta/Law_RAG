@@ -1,0 +1,16 @@
+{
+  "pipeline": "dedup\u2192drop_train\u2192chunk2000/1000\u2192BM25+USER2\u2192RRF\u2192bge-reranker-v2-m3",
+  "n_corpus_docs": 334,
+  "n_chunks": 1539,
+  "drop_train": true,
+  "skip_rerank": false,
+  "embed_model": "deepvk/USER2-base",
+  "rerank_model": "BAAI/bge-reranker-v2-m3",
+  "top_retrieve": 100,
+  "ce_max_chars": 800,
+  "ce_max_cands": 60,
+  "ce_max_length": 384,
+  "device": "cpu",
+  "submission_rows": 1750,
+  "unique_qids": 350
+}

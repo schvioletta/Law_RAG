@@ -1,0 +1,11 @@
+{
+  "pipeline": "top5c parallel: +BM25doc, best-chunk/doc CE@512",
+  "parent_lb": 0.68571,
+  "workers": 2,
+  "ce_max_docs": 50,
+  "ce_max_chars": 1200,
+  "ce_max_length": 512,
+  "overlap_with_top5": 0.5411428571428571,
+  "rows": 1750,
+  "unique_docs": 208
+}

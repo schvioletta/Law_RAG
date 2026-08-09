@@ -1,0 +1,48 @@
+{
+  "pipeline": "top5f: neighbor-answer expansion + multi-list RRF + CE@512 + 2nd-chunk boost",
+  "parent_lb": 0.70857,
+  "target_lb": 0.74,
+  "cfg": {
+    "threads": 4,
+    "top_retrieve": 150,
+    "ce_max_cands": 90,
+    "ce_max_chars": 1200,
+    "ce_max_length": 512,
+    "batch_size": 16,
+    "neighbors": 3,
+    "second_chunk_weight": 0.15,
+    "fuse_base": "/workspace/outputs/submission_top5d_lb070857.csv",
+    "submit": "keep",
+    "checkpoint_every": 10,
+    "fast_only": false
+  },
+  "fast": {
+    "name": "fast",
+    "rows": 1750,
+    "unique_docs": 157,
+    "train_leak": 0,
+    "overlap_070857": 0.8365714285714284
+  },
+  "raw": {
+    "name": "raw",
+    "rows": 1750,
+    "unique_docs": 185,
+    "train_leak": 0,
+    "overlap_070857": 0.816
+  },
+  "fuse": {
+    "name": "fuse",
+    "rows": 1750,
+    "unique_docs": 177,
+    "train_leak": 0,
+    "overlap_070857": 0.9588571428571427
+  },
+  "fuse_heavy": {
+    "name": "fuse_heavy",
+    "rows": 1750,
+    "unique_docs": 185,
+    "train_leak": 0,
+    "overlap_070857": 0.816
+  },
+  "submission_chosen": "keep"
+}
